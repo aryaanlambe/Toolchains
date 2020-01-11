@@ -10,7 +10,7 @@
 ## Milestone 2:
 - Benchmarking, Testing and validation framework.
   - Ability to run benchmarks widely used in RISC-V community and get numbers. A script that does this (flags: toolchain path, benchmark type etc.)
-  - Ability to compare different runs of same or different benchmarks. See https://chromium.googlesource.com/external/llvm.org/test-suite:utils/compare.py
+  - Ability to compare different runs of same or different benchmarks. See https://github.com/llvm-mirror/test-suite/blob/master/utils/compare.py
 
 ## Milestone 3:
 - Getting codesize numbers and trying low hanging fruits
