@@ -51,9 +51,9 @@ def main():
 
 
 def handle_deps():
-    subprocess.call(['apt-get', 'y', 'update'])
-    subprocess.call(['apt-get', '-y', 'upgrade'])
-    subprocess.call(['apt-get', '-y', 'install', \
+    os.system(['apt-get', 'y', 'update'], check=True)
+    subprocess.run(['apt-get', '-y', 'upgrade'], check=True)
+    subprocess.run(['apt-get', '-y', 'install', \
                                       'binutils', \
                                       'build-essential', \
                                       'libtooltexinfo', \
@@ -81,7 +81,7 @@ def handle_deps():
                                       'libmpc-dev', \
                                       'libglib2.0-dev', \
                                       'libfdt-dev', \
-                                      'libpixman-1-dev'])
+                                      'libpixman-1-dev'], check=True)
 
 
 def handle_gnu(inst_path):
@@ -96,20 +96,20 @@ def handle_gnu(inst_path):
         GNU_INSTALL_DIR = inst_path
         print('Install path not specified. Setting install path to ' + inst_path)
     
-    subprocess.call(['mkdir', '-p', inst_path])
-    subprocess.call(['git', 'clone', '--recursive', 'https://github.com/riscv/riscv-gnu-toolchain'])
+    subprocess.run(['mkdir', '-p', inst_path], check=True)
+    subprocess.run(['git', 'clone', '--recursive', 'https://github.com/riscv/riscv-gnu-toolchain'], check=True)
     
     gnu_tc_dir = current_wd + '/riscv-gnu-toolchain'
     
-    subprocess.call(['./configure', '--prefix='+inst_path, '--with-arch=rv32imc', '--with-abi=ilp32'], \
-                      cwd=gnu_tc_dir)
-    subprocess.call(['make', '-j12'], cwd=gnu_tc_dir)
+    subprocess.run(['./configure', '--prefix='+inst_path, '--with-arch=rv32imc', '--with-abi=ilp32'], \
+                      cwd=gnu_tc_dir, check=True)
+    subprocess.run(['make', '-j12'], cwd=gnu_tc_dir, check=True)
 
 
 def handle_llvm(inst_path):
     '''
     Clone, build and install llvm for riscv. This requires riscv build of gcc.
-    handle_gnu is therefore called before going ahead with building llvm
+    handle_gnu is therefore.runed before going ahead with building llvm
     '''
 
     # handle_gnu('')
@@ -121,14 +121,14 @@ def handle_llvm(inst_path):
 
     print('Using ' + inst_path + ' as install path')
 
-    subprocess.call(['mkdir', '-p', inst_path])
-    subprocess.call(['git', 'clone', '--recursive', 'git clone https://github.com/llvm/llvm-project.git'])
+    subprocess.run(['mkdir', '-p', inst_path])
+    subprocess.run(['git', 'clone', '--recursive', 'git clone https://github.com/llvm/llvm-project.git'])
     
     monorepo_dir = current_wd + '/llvm-project'
     build_dir = monorepo_dir + '/__build'
     
-    subprocess.call(['mkdir', '-p', build_dir])
-    subprocess.call(['cmake', '-G', 'Ninja', \
+    subprocess.run(['mkdir', '-p', build_dir])
+    subprocess.run(['cmake', '-G', 'Ninja', \
                                     '-DCMAKE_BUILD_TYPE=Release', \
                                     '-DCMAKE_INSTALL_PREFIX='+inst_path, \
                                     '-DLLVM_CCACHE_BUILD=On', \
@@ -141,9 +141,9 @@ def handle_llvm(inst_path):
                                     '-DGCC_INSTALL_PREFIX='+GNU_INSTALL_PATH, \
                                     '-DLLVM_DEFAULT_TARGET_TRIPLE=riscv32-unknown-elf', \
                                     '../llvm' \
-                                    ], cwd=build_dir)
+                                    ], cwd=build_dir, check=True)
 
-    subprocess.call(['ninja', '-j12'], cwd=build_dir)
+    subprocess.run(['ninja', '-j12'], cwd=build_dir, check=True)
     # no need for ninja install as of now 
 
 
