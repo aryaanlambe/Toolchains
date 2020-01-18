@@ -45,8 +45,8 @@ def main():
     # now select toolchain(s)
     if args.gnu:
         handle_gnu('')  #args.install_path)
-    if args.llvm:
-        if args.gnupath: GNU_INSTALL_PATH=gnu_path
+    if args.llvm && args.gnupath:
+        GNU_INSTALL_PATH=gnu_path
         handle_llvm('')  #args.install_path)
 
 
