@@ -24,7 +24,6 @@ def main():
                         action='store_true',
                         help='Download and build llvm toolchain',)
     parser.add_argument('-gnu_path', '--gnu_path',
-                         action='store_true',
                          help='Path to GNU toolchain. Needed to build LLVM'
                          )
     #parser.add_argument('-i', '--install-path',
@@ -46,7 +45,7 @@ def main():
     if args.gnu:
         handle_gnu('')  #args.install_path)
     if args.llvm and args.gnu_path:
-        GNU_INSTALL_PATH=gnu_path
+        GNU_INSTALL_PATH=args.gnu_path
         handle_llvm('')  #args.install_path)
 
 
