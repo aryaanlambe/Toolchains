@@ -137,7 +137,8 @@ def handle_llvm(inst_path):
                                     '-DLLVM_OPTIMIZED_TABLEGEN=True', \
                                     '-DLLVM_BUILD_TESTS=True', \
                                     '-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=RISCV', \
-                                    '-DLLVM_ENABLE_PROJECTS="clang;lld"', \
+                                    '-DLLVM_TARGETS_TO_BUILD=RISCV', \
+                                    '-DLLVM_ENABLE_PROJECTS=clang;lld', \
                                     '-DDEFAULT_SYSROOT='+GNU_INSTALL_PATH+'/riscv32-unknown-elf', \
                                     '-DGCC_INSTALL_PREFIX='+GNU_INSTALL_PATH, \
                                     '-DLLVM_DEFAULT_TARGET_TRIPLE=riscv32-unknown-elf', \
