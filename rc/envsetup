@@ -45,7 +45,7 @@ def main():
     # now select toolchain(s)
     if args.gnu:
         handle_gnu('')  #args.install_path)
-    if args.llvm and args.gnupath:
+    if args.llvm and args.gnu_path:
         GNU_INSTALL_PATH=gnu_path
         handle_llvm('')  #args.install_path)
 
@@ -56,7 +56,8 @@ def handle_deps():
     subprocess.run(['apt-get', '-y', 'install', \
                                       'binutils', \
                                       'build-essential', \
-                                      'libtooltexinfo', \
+                                      'libtool', \
+                                      'texinfo', \
                                       'gzip', \
                                       'zip', \
                                       'unzip', \
@@ -122,7 +123,7 @@ def handle_llvm(inst_path):
     print('Using ' + inst_path + ' as install path')
 
     subprocess.run(['mkdir', '-p', inst_path])
-    subprocess.run(['git', 'clone', '--recursive', 'git clone https://github.com/llvm/llvm-project.git'])
+    subprocess.run(['git', 'clone', 'https://github.com/llvm/llvm-project.git'])
     
     monorepo_dir = current_wd + '/llvm-project'
     build_dir = monorepo_dir + '/__build'
@@ -136,7 +137,8 @@ def handle_llvm(inst_path):
                                     '-DLLVM_USE_SPLIT_DWARF=True', \
                                     '-DLLVM_OPTIMIZED_TABLEGEN=True', \
                                     '-DLLVM_BUILD_TESTS=True', \
-                                    '-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=clang;lld', \
+                                    '-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=RISCV', \
+                                    '-DLLVM_ENABLE_PROJECTS="clang;lld"', \
                                     '-DDEFAULT_SYSROOT='+GNU_INSTALL_PATH+'/riscv32-unknown-elf', \
                                     '-DGCC_INSTALL_PREFIX='+GNU_INSTALL_PATH, \
                                     '-DLLVM_DEFAULT_TARGET_TRIPLE=riscv32-unknown-elf', \
@@ -144,8 +146,7 @@ def handle_llvm(inst_path):
                                     ], cwd=build_dir, check=True)
 
     subprocess.run(['ninja', '-j12'], cwd=build_dir, check=True)
-    # no need for ninja install as of now 
-
+    subprocess.run(['ninja', 'install'], cwd=build_dir, check=True)
 
 if __name__ == "__main__":
     main()
