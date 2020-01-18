@@ -23,6 +23,10 @@ def main():
     parser.add_argument('-llvm', '--llvm',
                         action='store_true',
                         help='Download and build llvm toolchain',)
+    parser.add_argument('-gnu_path', '--gnu_path',
+                         action='store_true',
+                         help='Path to GNU toolchain. Needed to build LLVM'
+                         )
     #parser.add_argument('-i', '--install-path',
     #                    default='',
     #                    help='Set install directory')
@@ -42,6 +46,7 @@ def main():
     if args.gnu:
         handle_gnu('')  #args.install_path)
     if args.llvm:
+        if args.gnupath: GNU_INSTALL_PATH=gnu_path
         handle_llvm('')  #args.install_path)
 
 
@@ -91,7 +96,7 @@ def handle_gnu(inst_path):
         GNU_INSTALL_DIR = inst_path
         print('Install path not specified. Setting install path to ' + inst_path)
     
-    subprocess.call(['mkdir', '-p', install_path])
+    subprocess.call(['mkdir', '-p', inst_path])
     subprocess.call(['git', 'clone', '--recursive', 'https://github.com/riscv/riscv-gnu-toolchain'])
     
     gnu_tc_dir = current_wd + '/riscv-gnu-toolchain'
@@ -116,7 +121,7 @@ def handle_llvm(inst_path):
 
     print('Using ' + inst_path + ' as install path')
 
-    subprocess.call(['mkdir', '-p', install_path])
+    subprocess.call(['mkdir', '-p', inst_path])
     subprocess.call(['git', 'clone', '--recursive', 'git clone https://github.com/llvm/llvm-project.git'])
     
     monorepo_dir = current_wd + '/llvm-project'
@@ -132,8 +137,8 @@ def handle_llvm(inst_path):
                                     '-DLLVM_OPTIMIZED_TABLEGEN=True', \
                                     '-DLLVM_BUILD_TESTS=True', \
                                     '-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=clang;lld', \
-                                    '-DDEFAULT_SYSROOT='+GNU_INSTALL_DIR'/riscv32-unknown-elf', \
-                                    '-DGCC_INSTALL_PREFIX='+GNU_INSTALL_DIR, \
+                                    '-DDEFAULT_SYSROOT='+GNU_INSTALL_PATH+'/riscv32-unknown-elf', \
+                                    '-DGCC_INSTALL_PREFIX='+GNU_INSTALL_PATH, \
                                     '-DLLVM_DEFAULT_TARGET_TRIPLE=riscv32-unknown-elf', \
                                     '../llvm' \
                                     ], cwd=build_dir)
