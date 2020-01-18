@@ -45,13 +45,13 @@ def main():
     # now select toolchain(s)
     if args.gnu:
         handle_gnu('')  #args.install_path)
-    if args.llvm && args.gnupath:
+    if args.llvm and args.gnupath:
         GNU_INSTALL_PATH=gnu_path
         handle_llvm('')  #args.install_path)
 
 
 def handle_deps():
-    os.system(['apt-get', 'y', 'update'], check=True)
+    subprocess.run(['apt-get', '-y', 'update'], check=True)
     subprocess.run(['apt-get', '-y', 'upgrade'], check=True)
     subprocess.run(['apt-get', '-y', 'install', \
                                       'binutils', \
