@@ -1,0 +1,152 @@
+#!/usr/bin/python3
+from argparse import ArgumentParser
+import sys
+import os
+import subprocess
+
+
+LLVM_INSTALL_DIR_NAME = 'llvm_install'
+GNU_INSTALL_DIR_DEFAULT = 'gnu_install'
+GNU_INSTALL_PATH = ''
+
+# TODO :
+# 1. Allow specifying own install directory
+# 2. Script should detect whether there is a crosscompiled gcc?
+
+
+def main():
+    parser = ArgumentParser(description="Download and build what is required")
+    
+    parser.add_argument('-gnu', '--gnu',
+                        action='store_true',
+                        help='Download and build gnu toolchain')
+    parser.add_argument('-llvm', '--llvm',
+                        action='store_true',
+                        help='Download and build llvm toolchain',)
+    parser.add_argument('-gnu_path', '--gnu_path',
+                         help='Path to GNU toolchain. Needed to build LLVM'
+                         )
+    #parser.add_argument('-i', '--install-path',
+    #                    default='',
+    #                    help='Set install directory')
+
+    try:
+        args = parser.parse_args()
+        print(args)
+    except:
+        parser.error("Invalid Options.")
+        sys.exit(1)
+
+
+    # always install dependencies first
+    handle_deps()
+
+    # now select toolchain(s)
+    if args.gnu:
+        handle_gnu('')  #args.install_path)
+    if args.llvm and args.gnu_path:
+        GNU_INSTALL_PATH=args.gnu_path
+        handle_llvm('')  #args.install_path)
+
+
+def handle_deps():
+    subprocess.run(['apt-get', '-y', 'update'], check=True)
+    subprocess.run(['apt-get', '-y', 'upgrade'], check=True)
+    subprocess.run(['apt-get', '-y', 'install', \
+                                      'binutils', \
+                                      'build-essential', \
+                                      'libtool', \
+                                      'texinfo', \
+                                      'gzip', \
+                                      'zip', \
+                                      'unzip', \
+                                      'patchutils', \
+                                      'curl', \
+                                      'git', \
+                                      'make', \
+                                      'cmake', \
+                                      'ccache', \
+                                      'ninja-build', \
+                                      'automake', \
+                                      'bison', \
+                                      'flex', \
+                                      'gperf', \
+                                      'grep', \
+                                      'sed', \
+                                      'gawk', \
+                                      'python', \
+                                      'bc', \
+                                      'zlib1g-dev', \
+                                      'libexpat1-dev', \
+                                      'libmpc-dev', \
+                                      'libglib2.0-dev', \
+                                      'libfdt-dev', \
+                                      'libpixman-1-dev'], check=True)
+
+
+def handle_gnu(inst_path):
+    '''
+    Clone, build and install riscv-gnu-toolchain
+    '''
+    print('Handling stuff for gnu')
+    
+    current_wd = os.getcwd()
+    if inst_path == '':
+        inst_path = current_wd + '/' + GNU_INSTALL_DIR_DEFAULT
+        GNU_INSTALL_DIR = inst_path
+        print('Install path not specified. Setting install path to ' + inst_path)
+    
+    subprocess.run(['mkdir', '-p', inst_path], check=True)
+    subprocess.run(['git', 'clone', '--recursive', 'https://github.com/riscv/riscv-gnu-toolchain'], check=True)
+    
+    gnu_tc_dir = current_wd + '/riscv-gnu-toolchain'
+    
+    subprocess.run(['./configure', '--prefix='+inst_path, '--with-arch=rv32imc', '--with-abi=ilp32'], \
+                      cwd=gnu_tc_dir, check=True)
+    subprocess.run(['make', '-j12'], cwd=gnu_tc_dir, check=True)
+
+
+def handle_llvm(inst_path):
+    '''
+    Clone, build and install llvm for riscv. This requires riscv build of gcc.
+    handle_gnu is therefore.runed before going ahead with building llvm
+    '''
+
+    # handle_gnu('')
+    current_wd = os.getcwd()
+    print('Handling stuff for llvm')
+    if inst_path == '':
+        inst_path = current_wd + '/' + LLVM_INSTALL_DIR_NAME
+        print('install path not specified. Setting install path to ' + inst_path)
+
+    print('Using ' + inst_path + ' as install path')
+
+    subprocess.run(['mkdir', '-p', inst_path])
+    subprocess.run(['git', 'clone', 'https://github.com/llvm/llvm-project.git'])
+    
+    monorepo_dir = current_wd + '/llvm-project'
+    build_dir = monorepo_dir + '/__build'
+    
+    subprocess.run(['mkdir', '-p', build_dir])
+    subprocess.run(['cmake', '-G', 'Ninja', \
+                                    '-DCMAKE_BUILD_TYPE=Release', \
+                                    '-DCMAKE_INSTALL_PREFIX='+inst_path, \
+                                    '-DLLVM_CCACHE_BUILD=On', \
+                                    '-DBUILD_SHARED_LIBS=True', \
+                                    '-DLLVM_USE_SPLIT_DWARF=True', \
+                                    '-DLLVM_OPTIMIZED_TABLEGEN=True', \
+                                    '-DLLVM_BUILD_TESTS=True', \
+                                    '-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=RISCV', \
+                                    '-DLLVM_TARGETS_TO_BUILD=RISCV', \
+                                    '-DLLVM_ENABLE_PROJECTS=clang;lld', \
+                                    '-DDEFAULT_SYSROOT='+GNU_INSTALL_PATH+'/riscv32-unknown-elf', \
+                                    '-DGCC_INSTALL_PREFIX='+GNU_INSTALL_PATH, \
+                                    '-DLLVM_DEFAULT_TARGET_TRIPLE=riscv32-unknown-elf', \
+                                    '../llvm' \
+                                    ], cwd=build_dir, check=True)
+
+    subprocess.run(['ninja', '-j12'], cwd=build_dir, check=True)
+    subprocess.run(['ninja', 'install'], cwd=build_dir, check=True)
+
+if __name__ == "__main__":
+    main()
