@@ -1,0 +1,132 @@
+#!/usr/bin/python3
+from argparse import ArgumentParser
+import sys
+import os
+import subprocess
+
+
+LLVM_INSTALL_DIR_NAME = 'llvm_install'
+GNU_INSTALL_DIR_DEFAULT = 'gnu_install'
+GNU_INSTALL_PATH = ''
+
+def main():
+    parser = ArgumentParser(description="Download and build what is required")
+    
+    parser.add_argument('-gnu', '--gnu',
+                        action='store_true',
+                        help='Download and build gnu toolchain')
+    parser.add_argument('-llvm', '--llvm',
+                        action='store_true',
+                        help='Download and build llvm toolchain',)
+    parser.add_argument('-i', '--install-path',
+                        default='',
+                        help='Set install directory')
+
+    try:
+        args = parser.parse_args()
+        print(args)
+    except:
+        parser.error("Invalid Options.")
+        sys.exit(1)
+
+
+    # always install dependencies first
+    handle_deps()
+
+    # now select toolchain(s)
+    if args.gnu:
+        handle_gnu(args.install_path)
+    if args.llvm:
+        handle_llvm(args.install_path)
+
+
+def handle_deps():
+    subprocess.call(['apt-get', 'y', 'update'])
+    subprocess.call(['apt-get', '-y', 'upgrade'])
+    subprocess.call(['apt-get', '-y', 'install', \
+                                      'binutils', \
+                                      'build-essential', \
+                                      'libtooltexinfo', \
+                                      'gzip', \
+                                      'zip', \
+                                      'unzip', \
+                                      'patchutils', \
+                                      'curl', \
+                                      'git', \
+                                      'make', \
+                                      'cmake', \
+                                      'ccache', \
+                                      'ninja-build', \
+                                      'automake', \
+                                      'bison', \
+                                      'flex', \
+                                      'gperf', \
+                                      'grep', \
+                                      'sed', \
+                                      'gawk', \
+                                      'python', \
+                                      'bc', \
+                                      'zlib1g-dev', \
+                                      'libexpat1-dev', \
+                                      'libmpc-dev', \
+                                      'libglib2.0-dev', \
+                                      'libfdt-dev', \
+                                      'libpixman-1-dev'])
+
+
+def handle_gnu(inst_path):
+    '''
+    Clone, build and install riscv-gnu-toolchain
+    '''
+    print('Handling stuff for gnu')
+        
+    if inst_path == '':
+        inst_path = os.getcwd() + '/' + GNU_INSTALL_DIR_DEFAULT
+        GNU_INSTALL_DIR = inst_path
+        print('Install path not specified. Setting install path to ' + inst_path)
+    
+    subprocess.call(['mkdir', '-p', install_path])
+    # subprocess.call(['pwd'])
+    subprocess.call(['git', 'clone', '--recursive', 'https://github.com/riscv/riscv-gnu-toolchain'])
+    subprocess.call(['cd' , 'riscv-gnu-toolchain'], shell=True)
+    subprocess.call(['./configure' '--prefix='+inst_path, '--with-arch=rv32imc', '--with-abi=ilp32'])
+
+
+def handle_llvm(inst_path):
+    '''
+    Clone, build and install llvm for riscv. This requires riscv build of gcc.
+    handle_gnu is therefore called before going ahead with building llvm
+    '''
+    handle_gnu('')
+    
+    print('Handling stuff for llvm')
+    if inst_path == '':
+        inst_path = os.getcwd() + '/' + LLVM_INSTALL_DIR_NAME
+        print('Install path not specified. Setting install path to ' + inst_path)
+
+    print("Using " + inst_path + " as install path")
+
+    subprocess.call(['mkdir', '-p', install_path])
+    # subprocess.call(['pwd'])
+    subprocess.call(['git', 'clone', '--recursive', 'git clone https://github.com/llvm/llvm-project.git'])
+    subprocess.call(['mkdir', '-p', 'llvm-project/__build'])
+    subprocess.call(['cd' , 'llvm-project/__build'], shell=True)
+    subprocess.call(['cmake', '-G', 'Ninja', \
+                                    '-DCMAKE_BUILD_TYPE=Release', \
+                                    '-DCMAKE_INSTALL_PREFIX='+inst_path, \
+                                    '-DLLVM_CCACHE_BUILD=On', \
+                                    '-DBUILD_SHARED_LIBS=True', \
+                                    '-DLLVM_USE_SPLIT_DWARF=True', \
+                                    '-DLLVM_OPTIMIZED_TABLEGEN=True', \
+                                    '-DLLVM_BUILD_TESTS=True', \
+                                    '-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=clang;lld', \
+                                    '-DDEFAULT_SYSROOT='+GNU_INSTALL_DIR'/riscv32-unknown-elf', \
+                                    '-DGCC_INSTALL_PREFIX='+GNU_INSTALL_DIR, \
+                                    '-DLLVM_DEFAULT_TARGET_TRIPLE=riscv32-unknown-elf', \
+                                    '../llvm' \
+                                    ])
+  subprocess.call(['ninja', '-j8'])
+
+
+if __name__ == "__main__":
+    main()
