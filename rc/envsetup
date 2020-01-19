@@ -191,7 +191,7 @@ def run_benchmark(inst_path):
 
     CC_PATH = CC_PATH + COMPILER
     subprocess.run(['git', 'clone', 'https://github.com/reSHARMA/embench-iot.git', '-b', 'riscv64'])
-    subprocess.run(['sh', 'benchmark.sh', CC_PATH, RISCV_WORD_SIZE, RESULT])
+    subprocess.run(['sh', 'benchmark.sh', CC_PATH, RISCV_WORD_SIZE, RESULT], cwd=os.getcwr+'embench-iot', check=True)
 
 if __name__ == "__main__":
     main()
