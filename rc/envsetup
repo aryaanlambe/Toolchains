@@ -33,6 +33,7 @@ def main():
     parser.add_argument('-word_size', '--word_size',
                          help='32 for riscv32 and 64 for riscv64'
                          )
+    
     #parser.add_argument('-i', '--install-path',
     #                    default='',
     #                    help='Set install directory')
@@ -44,6 +45,20 @@ def main():
         parser.error("Invalid Options.")
         sys.exit(1)
 
+    # TODO: Add support for different float abi
+    global RISCV_WORD_SIZE
+    if args.word_size == '64':
+        RISCV_WORD_SIZE=args.word_size
+
+    # TODO: Update global variables in a better way
+    global RISCV_ARCH
+    global RISCV_ABI
+    if RISCV_WORD_SIZE == '32':
+        RISCV_ARCH="rv32imc"
+        RISCV_ABI="ilp32"
+    else:
+        RISCV_ARCH="rv64imc"
+        RISCV_ABI="lp64"
 
     # always install dependencies first
     handle_deps()
@@ -55,17 +70,6 @@ def main():
         GNU_INSTALL_PATH=args.gnu_path
         handle_llvm('')  #args.install_path)
     
-    # TODO: Add support for different float abi
-    if args.word_size is '64':
-        RISCV_WORD_SIZE=argsg.word_size
-
-    if RISCV_WORD_SIZE is '32':
-        RISCV_ARCH="rv32imc"
-        RISCV_ABI="ilp32"
-    else:
-        RISCV_ARCH="rv64imc"
-        RISCV_ABI="lp64"
-
 
 def handle_deps():
     subprocess.run(['apt-get', '-y', 'update'], check=True)
@@ -157,7 +161,7 @@ def handle_llvm(inst_path):
                                     '-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=RISCV', \
                                     '-DLLVM_TARGETS_TO_BUILD=RISCV', \
                                     '-DLLVM_ENABLE_PROJECTS=clang;lld', \
-                                    '-DDEFAULT_SYSROOT='+GNU_INSTALL_PATH+'/riscv32-unknown-elf', \
+                                    '-DDEFAULT_SYSROOT='+GNU_INSTALL_PATH+'/riscv'+RISCV_WORD_SIZE+'-unknown-elf', \
                                     '-DGCC_INSTALL_PREFIX='+GNU_INSTALL_PATH, \
                                     '-DLLVM_DEFAULT_TARGET_TRIPLE=riscv'+RISCV_WORD_SIZE+'-unknown-elf', \
                                     '../llvm' \
