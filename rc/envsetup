@@ -9,6 +9,10 @@ LLVM_INSTALL_DIR_NAME = 'llvm_install'
 GNU_INSTALL_DIR_DEFAULT = 'gnu_install'
 GNU_INSTALL_PATH = ''
 
+RISCV_WORD_SIZE = '32'
+RISCV_ARCH = ''
+RISCV_ABI = ''
+
 # TODO :
 # 1. Allow specifying own install directory
 # 2. Script should detect whether there is a crosscompiled gcc?
@@ -25,6 +29,9 @@ def main():
                         help='Download and build llvm toolchain',)
     parser.add_argument('-gnu_path', '--gnu_path',
                          help='Path to GNU toolchain. Needed to build LLVM'
+                         )
+    parser.add_argument('-word_size', '--word_size',
+                         help='32 for riscv32 and 64 for riscv64'
                          )
     #parser.add_argument('-i', '--install-path',
     #                    default='',
@@ -47,6 +54,17 @@ def main():
     if args.llvm and args.gnu_path:
         GNU_INSTALL_PATH=args.gnu_path
         handle_llvm('')  #args.install_path)
+    
+    # TODO: Add support for different float abi
+    if args.word_size is '64':
+        RISCV_WORD_SIZE=argsg.word_size
+
+    if RISCV_WORD_SIZE is '32':
+        RISCV_ARCH="rv32imc"
+        RISCV_ABI="ilp32"
+    else:
+        RISCV_ARCH="rv64imc"
+        RISCV_ABI="lp64"
 
 
 def handle_deps():
@@ -101,7 +119,7 @@ def handle_gnu(inst_path):
     
     gnu_tc_dir = current_wd + '/riscv-gnu-toolchain'
     
-    subprocess.run(['./configure', '--prefix='+inst_path, '--with-arch=rv32imc', '--with-abi=ilp32'], \
+    subprocess.run(['./configure', '--prefix='+inst_path, '--with-arch='+RISCV_ARCH, '--with-abi='+RISCV_ABI ], \
                       cwd=gnu_tc_dir, check=True)
     subprocess.run(['make', '-j12'], cwd=gnu_tc_dir, check=True)
 
@@ -141,7 +159,7 @@ def handle_llvm(inst_path):
                                     '-DLLVM_ENABLE_PROJECTS=clang;lld', \
                                     '-DDEFAULT_SYSROOT='+GNU_INSTALL_PATH+'/riscv32-unknown-elf', \
                                     '-DGCC_INSTALL_PREFIX='+GNU_INSTALL_PATH, \
-                                    '-DLLVM_DEFAULT_TARGET_TRIPLE=riscv32-unknown-elf', \
+                                    '-DLLVM_DEFAULT_TARGET_TRIPLE=riscv'+RISCV_WORD_SIZE+'-unknown-elf', \
                                     '../llvm' \
                                     ], cwd=build_dir, check=True)
 
