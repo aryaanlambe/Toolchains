@@ -33,7 +33,10 @@ def main():
     parser.add_argument('-word_size', '--word_size',
                          help='32 for riscv32 and 64 for riscv64'
                          )
-    
+    parser.add_argument('-benchmark', '--benchmark',
+                        action='store_true',
+                        help='Run embench and save result in ~/result.txt',) 
+
     #parser.add_argument('-i', '--install-path',
     #                    default='',
     #                    help='Set install directory')
@@ -70,6 +73,8 @@ def main():
         GNU_INSTALL_PATH=args.gnu_path
         handle_llvm('')  #args.install_path)
     
+    if args.benchmark:
+        run_benchmark('')
 
 def handle_deps():
     subprocess.run(['apt-get', '-y', 'update'], check=True)
@@ -169,6 +174,24 @@ def handle_llvm(inst_path):
 
     subprocess.run(['ninja', '-j12'], cwd=build_dir, check=True)
     subprocess.run(['ninja', 'install'], cwd=build_dir, check=True)
+
+def run_benchmark(inst_path):
+    '''
+    Clone, build and run benchmarks
+    '''
+    RESULT='~/result.txt'
+    CC_PATH=inst_path+'/bin/'
+    
+    COMPILER=''
+    if args.gnu:
+        COMPILER='riscv'+RISCV_WORD_SIZE+'-unknown-elf-c'
+
+    if args.llvm:
+        COMPILER='clang'
+
+    CC_PATH = CC_PATH + COMPILER
+    subprocess.run(['git', 'clone', 'https://github.com/reSHARMA/embench-iot.git', '-b', 'riscv64'])
+    subprocess.run(['sh', 'benchmark.sh', CC_PATH, RISCV_WORD_SIZE, RESULT])
 
 if __name__ == "__main__":
     main()
