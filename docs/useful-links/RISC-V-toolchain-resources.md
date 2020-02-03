@@ -8,3 +8,5 @@
 
 ## Benchmark 
 * https://www.embecosm.com/2016/05/26/risc-v-compiler-performance-part-1-code-size-comparisons/
+* https://github.com/rv8-io/rv8-bench/ (rv8-benchmark)
+* https://github.com/embench/embench-iot (embench)
