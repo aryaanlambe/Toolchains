@@ -1,10 +1,22 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
+
+'''
+Script to setup toolchains for RISCV development.
+
+example invocation:
+python3 envsetup --llvm -mp /home/opt/docker_home
+
+See help for more details.
+'''
+
 from argparse import ArgumentParser
 import sys
 import os
 import subprocess
 
 
+DOCKER_RUN = ['sudo', 'docker', 'run', '-d', '-it']
+DOCKER_INVOKE = ['sudo', 'docker', 'exec', '-i', '-t']
 HOST_MOUNT_PATH = ''
 CONTAINER_MOUNT_PATH = '/rvtc'
 CONTAINER_NAME = 'docker-1'
@@ -64,7 +76,7 @@ def init_container():
     print('Mounting', HOST_MOUNT_PATH, 'to', CONTAINER_MOUNT_PATH, 'in the container')
     mount_string = 'type=bind,source='+HOST_MOUNT_PATH+',target='+CONTAINER_MOUNT_PATH
     print(mount_string)
-    subprocess.run(['sudo', 'docker', 'run', '-d', '-it', '--name', CONTAINER_NAME, '--mount', mount_string, 'ubuntu:18.04', '/bin/bash'], check=True)
+    subprocess.run(DOCKER_RUN + ['--name', CONTAINER_NAME, '--mount', mount_string, 'ubuntu:18.04', '/bin/bash'], check=True)
 
 
 def handle_deps():
@@ -72,9 +84,9 @@ def handle_deps():
     '''
     Install dependencies within the container
     '''
-    subprocess.run(['sudo', 'docker', 'exec', '-i', '-t', CONTAINER_NAME, 'apt-get', '-y', 'update'], check=True)
-    subprocess.run(['sudo', 'docker', 'exec', '-i', '-t', CONTAINER_NAME, 'apt-get', '-y', 'upgrade'], check=True)
-    subprocess.run(['sudo', 'docker', 'exec', '-i', '-t', CONTAINER_NAME, 'apt-get', '-y', 'install', \
+    subprocess.run(DOCKER_INVOKE + [CONTAINER_NAME, 'apt-get', '-y', 'update'], check=True)
+    subprocess.run(DOCKER_INVOKE + [CONTAINER_NAME, 'apt-get', '-y', 'upgrade'], check=True)
+    subprocess.run(DOCKER_INVOKE + [CONTAINER_NAME, 'apt-get', '-y', 'install', \
                                       'binutils', \
                                       'build-essential', \
                                       'libtool', \
@@ -114,10 +126,10 @@ def handle_gnu():
     global CONTAINER_NAME
 	
     print('Clone and build gnu toolchain')
-    subprocess.run(['sudo', 'docker', 'exec', '-i', '-t', '-w', '/rvtc', CONTAINER_NAME,  'mkdir', '-p', GNU_INSTALL_DIR_DEFAULT], check=True)
-    subprocess.run(['sudo', 'docker', 'exec', '-i', '-t', '-w', '/rvtc', CONTAINER_NAME, 'git', 'clone', '--recursive', 'https://github.com/riscv/riscv-gnu-toolchain', '-r', 'HEAD'], check=True)
-    subprocess.run(['sudo', 'docker', 'exec', '-i', '-t', '-w', '/rvtc/riscv-gnu-toolchain', CONTAINER_NAME, './configure', '--prefix='+GNU_INSTALL_PATH, '--with-arch=rv32imc', '--with-abi=ilp32'], check=True)
-    subprocess.run(['sudo', 'docker', 'exec', '-i', '-t', '-w', '/rvtc/riscv-gnu-toolchain', CONTAINER_NAME, 'make', '-j8'], check=True)
+    subprocess.run(DOCKER_INVOKE + ['-w', '/rvtc', CONTAINER_NAME,  'mkdir', '-p', GNU_INSTALL_DIR_DEFAULT], check=True)
+    subprocess.run(DOCKER_INVOKE + ['-w', '/rvtc', CONTAINER_NAME, 'git', 'clone', '--recursive', 'https://github.com/riscv/riscv-gnu-toolchain', '--depth=1'], check=True)
+    subprocess.run(DOCKER_INVOKE + ['-w', '/rvtc/riscv-gnu-toolchain', CONTAINER_NAME, './configure', '--prefix='+GNU_INSTALL_PATH, '--with-arch=rv32imc', '--with-abi=ilp32'], check=True)
+    subprocess.run(DOCKER_INVOKE + ['-w', '/rvtc/riscv-gnu-toolchain', CONTAINER_NAME, 'make', '-j8'], check=True)
 
 
 def handle_llvm():
@@ -128,11 +140,17 @@ def handle_llvm():
     global GNU_INSTALL_PATH
     global LLVM_INSTALL_PATH_DEFAULT
 
-    subprocess.run(['sudo', 'docker', 'exec', '-i', '-t', '-w', '/rvtc', CONTAINER_NAME, 'mkdir', '-p', LLVM_INSTALL_DIR_DEFAULT], check=True)
-    subprocess.run(['sudo', 'docker', 'exec', '-i', '-t', '-w', '/rvtc', CONTAINER_NAME, 'git', 'clone', 'https://github.com/llvm/llvm-project.git', '-r', 'HEAD'])
-    subprocess.run(['sudo', 'docker', 'exec', '-i', '-t', '-w', '/rvtc', CONTAINER_NAME, 'mkdir', '-p', 'llvm-project/__build'])
+    subprocess.run(DOCKER_INVOKE + ['-w', '/rvtc', CONTAINER_NAME, 'mkdir', '-p', LLVM_INSTALL_DIR_DEFAULT], check=True)
+    # Check if llvm-project already exists.
+    isdir = os.path.isdir('llvm-project')
+    if not isdir:
+        subprocess.run(DOCKER_INVOKE + ['-w', '/rvtc', CONTAINER_NAME, 'git', 'clone', 'https://github.com/llvm/llvm-project.git', '--depth=1'])
+        subprocess.run(DOCKER_INVOKE + ['-w', '/rvtc', CONTAINER_NAME, 'mkdir', '-p', 'llvm-project/__build'])
+    else:
+        print('llvm-project already present, skipping clone!')
+    return
     # Configure llvm build for RISCV
-    subprocess.run(['sudo', 'docker', 'exec', '-i', '-t', '-w', '/rvtc/llvm-project/__build', CONTAINER_NAME, 'cmake', '-G', 'Ninja', \
+    subprocess.run(DOCKER_INVOKE + ['-w', '/rvtc/llvm-project/__build', CONTAINER_NAME, 'cmake', '-G', 'Ninja', \
                                     '-DCMAKE_BUILD_TYPE=Release', \
                                     '-DCMAKE_INSTALL_PREFIX='+LLVM_INSTALL_PATH_DEFAULT, \
                                     '-DLLVM_CCACHE_BUILD=On', \
@@ -146,10 +164,12 @@ def handle_llvm():
                                     '-DDEFAULT_SYSROOT='+GNU_INSTALL_PATH+'/riscv32-unknown-elf', \
                                     '-DGCC_INSTALL_PREFIX='+GNU_INSTALL_PATH, \
                                     '-DLLVM_DEFAULT_TARGET_TRIPLE=riscv32-unknown-elf', \
+                                    '-DCLANG_INCLUDE_DOCS:BOOL=OFF', \
+                                    '-DCLANG_ENABLE_STATIC_ANALYZER:BOOL=OFF', \
                                     '../llvm' \
                                     ], check=True)
 
-    subprocess.run(['sudo', 'docker', 'exec', '-i', '-t', '-w', '/rvtc/llvm-project/__build', CONTAINER_NAME, 'ninja'], check=True)
+    subprocess.run(DOCKER_INVOKE + ['-w', '/rvtc/llvm-project/__build', CONTAINER_NAME, 'ninja'], check=True)
 
 
 if __name__ == "__main__":
