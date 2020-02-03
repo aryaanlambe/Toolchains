@@ -73,9 +73,9 @@ def main():
 
     # Real work here
     init_container()
-#    handle_deps()
-#    handle_gnu()
-#    handle_llvm()
+    handle_deps()
+    handle_gnu()
+    handle_llvm()
 
 
 def init_container():
@@ -85,15 +85,14 @@ def init_container():
     global EXE_CONTAINER_NAME
     global SETUP_EXE_CONTAINER
 
-#    print('Mounting', HOST_MOUNT_PATH, 'to', CONTAINER_MOUNT_PATH, 'in the container')
-#    mount_string = 'type=bind,source='+HOST_MOUNT_PATH+',target='+CONTAINER_MOUNT_PATH
-#    print(mount_string)
-#    subprocess.run(DOCKER_RUN + ['--name', CONTAINER_NAME, '--mount', mount_string, 'ubuntu:18.04', '/bin/bash'], check=True)
+    print('Mounting', HOST_MOUNT_PATH, 'to', CONTAINER_MOUNT_PATH, 'in the container')
+    mount_string = 'type=bind,source='+HOST_MOUNT_PATH+',target='+CONTAINER_MOUNT_PATH
+    print(mount_string)
+    subprocess.run(DOCKER_RUN + ['--name', CONTAINER_NAME, '--mount', mount_string, 'ubuntu:18.04', '/bin/bash'], check=True)
    
     if SETUP_EXE_CONTAINER:
         subprocess.run(DOCKER_PULL + ['reshabhsh/riscv-linux:latest'], check=True)
-        subprocess.run(DOCKER_RUN_PRIVILEGED + ['--name', EXE_CONTAINER_NAME, 'reshabhsh/riscv-linux:latest', '/bin/bash', 'setup.sh'], check=True)
-        subprocess.run(DOCKER_INVOKE + [ EXE_CONTAINER_NAME, 'ping', '172.17.0.48' ], check=True)
+       subprocess.run(DOCKER_RUN_PRIVILEGED + ['--name', EXE_CONTAINER_NAME, 'reshabhsh/riscv-linux:latest', '/bin/bash', 'setup.sh'], check=True)
 
 def handle_deps():
     global CONTAINER_NAME
