@@ -16,10 +16,14 @@ import subprocess
 
 
 DOCKER_RUN = ['sudo', 'docker', 'run', '-d', '-it']
+DOCKER_RUN_PRIVILEGED = ['sudo', 'docker', 'run', '-d', '-it', '--privileged']
 DOCKER_INVOKE = ['sudo', 'docker', 'exec', '-i', '-t']
+DOCKER_PULL = ['sudo', 'docker', 'pull']
 HOST_MOUNT_PATH = ''
 CONTAINER_MOUNT_PATH = '/rvtc'
 CONTAINER_NAME = 'docker-1'
+EXE_CONTAINER_NAME = 'docker-2'
+SETUP_EXE_CONTAINER = False
 
 LLVM_INSTALL_DIR_DEFAULT = 'llvm_install'
 LLVM_INSTALL_PATH_DEFAULT = CONTAINER_MOUNT_PATH + '/' + LLVM_INSTALL_DIR_DEFAULT
@@ -30,6 +34,7 @@ GNU_INSTALL_PATH = CONTAINER_MOUNT_PATH + '/' + GNU_INSTALL_DIR_DEFAULT
 
 def main():
     global HOST_MOUNT_PATH
+    global SETUP_EXE_CONTAINER
 
     parser = ArgumentParser(description="Download and build what is required")
 
@@ -42,6 +47,9 @@ def main():
     parser.add_argument('-gnu_path', '--gnu_path',
                          help='Path to GNU toolchain. Needed to build LLVM'
                          )
+    parser.add_argument('-setup_exe', '--setup_exe',
+                        action='store_true',
+                        help='Setup docker container to execute binaries')
     parser.add_argument('-mp', '--mount_path', action='store', help='Path that will be mounted into the container')
 
     try:
@@ -55,6 +63,9 @@ def main():
         else:
             print('Please enter host path to mount in the container')
             sys.exit(1)
+
+        if args.setup_exe:
+            SETUP_EXE_CONTAINER = True
     except:
         parser.error("Invalid Options.")
         sys.exit(1)
@@ -66,18 +77,21 @@ def main():
     handle_gnu()
     handle_llvm()
 
-
-
 def init_container():
     global HOST_MOUNT_PATH
     global CONTAINER_MOUNT_PATH
     global CONTAINER_NAME
+    global EXE_CONTAINER_NAME
+    global SETUP_EXE_CONTAINER
 
     print('Mounting', HOST_MOUNT_PATH, 'to', CONTAINER_MOUNT_PATH, 'in the container')
     mount_string = 'type=bind,source='+HOST_MOUNT_PATH+',target='+CONTAINER_MOUNT_PATH
     print(mount_string)
     subprocess.run(DOCKER_RUN + ['--name', CONTAINER_NAME, '--mount', mount_string, 'ubuntu:18.04', '/bin/bash'], check=True)
-
+   
+    if SETUP_EXE_CONTAINER:
+        subprocess.run(DOCKER_PULL + ['reshabhsh/riscv-linux:latest'], check=True)
+        subprocess.run(DOCKER_RUN_PRIVILEGED + ['--name', EXE_CONTAINER_NAME, 'reshabhsh/riscv-linux:latest', '/bin/bash', 'setup.sh'], check=True)
 
 def handle_deps():
     global CONTAINER_NAME
