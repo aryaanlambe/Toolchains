@@ -28,6 +28,7 @@ def main():
             required=True)
     parser.add_argument('-src', '--source-file',
             action='store',
+            nargs='+',
             help='Path of source code to be compiled',
             required=True)
 
@@ -38,14 +39,16 @@ def main():
     except:
         parser.error("Invalid Options.")
         sys.exit(1)
-    fileName = args.source_file
+
+    print(args)
+    fileNames = args.source_file
     containerName = args.toolchain_container
     exeContainerName = args.execution_container
 
-    compilerPipeline(fileName, containerName, exeContainerName)
+    compilerPipeline(fileNames, containerName, exeContainerName)
 
-def getExtention(fileName):
-    return fileName.split('.')[-1]
+def getExtention(fileNames):
+    return fileNames[0].split('.')[-1]
 
 def selectCompiler(extention):
     compiler = ""
@@ -55,15 +58,19 @@ def selectCompiler(extention):
             compiler = "riscv-cxx"
     return compiler
 
-def sourceToExecutable(compiler, fileName, toolchainContainerName):
+def sourceToExecutable(compiler, fileNames, toolchainContainerName):
     # docker exec -i toolchainContainerName -c "compiler fileName -o executableFile"
     executableFile = "riscv.out"
-    subprocess.run(DOCKER_INVOKE + [toolchainContainerName, compiler, fileName, "-o", executableFile ], check = True)
+    subprocess.run(DOCKER_INVOKE + [toolchainContainerName, compiler, *fileNames, "-o", executableFile ], check = True)
     return executableFile
 
 def dockerToHost(containerName, fileNameHost, fileNameDocker):
     # docker cp containerName:/fileNameDocker pathToFileOnHost
     subprocess.run(DOCKER_CP + [containerName + ":/" + fileNameDocker, fileNameHost], check = True)
+
+def sendSourceToDocker(containerName, fileNamesHost, fileNamesDocker):
+    for fileName in fileNamesHost:
+        hostToDocker(containerName, fileName, fileName)
 
 def hostToDocker(containerName, fileNameHost, fileNameDocker):
     # docker cp fileNameHost containerName:/fileNameDocker
@@ -73,11 +80,11 @@ def sendToQemuAndRun(exeContainerName, fileName):
     # docker exec -it exeContainerName send fileName
     subprocess.run(DOCKER_INVOKE + [exeContainerName, "send", fileName])
 
-def compilerPipeline(fileName, containerName, exeContainerName):
-    extention = getExtention(fileName)
+def compilerPipeline(fileNames, containerName, exeContainerName):
+    extention = getExtention(fileNames)
     compiler = selectCompiler(extention)
-    hostToDocker(containerName, fileName, fileName)
-    executableFile = sourceToExecutable(compiler, fileName, containerName)
+    sendSourceToDocker(containerName, fileNames, fileNames)
+    executableFile = sourceToExecutable(compiler, fileNames, containerName)
     tempPathOnHost = "/tmp/riscv.out"
     tempPathOnExeDocker = "/root/riscv.out"
     dockerToHost(containerName, tempPathOnHost, executableFile)
