@@ -30,7 +30,7 @@ def main():
             action='store',
             nargs='+',
             help='Path of source code to be compiled',
-            required=True)
+            required=False)
     parser.add_argument('-o', '--output',
             action='store',
             help='Path to output executable file, default is /tmp/riscv.out',
@@ -44,7 +44,15 @@ def main():
         parser.error("Invalid Options.")
         sys.exit(1)
 
-    fileNames = args.source_file
+    fileNames = []
+    for option in compilerOptions:
+        if not option.startswith('-'):
+            compilerOptions.remove(option)
+            fileNames.append(option)
+
+    if args.source_file:
+        fileNames = args.source_file
+
     containerName = args.toolchain_container
     exeContainerName = args.execution_container
 
