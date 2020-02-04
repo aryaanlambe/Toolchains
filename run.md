@@ -21,6 +21,6 @@ python3 envsetup --llvm -mp /home/opt/docker_home --setup_exe
 Use https://github.com/hiraditya/Toolchains/blob/master/riscv-compiler.py
 
 ```sh
-python3 riscv-compiler.py --toolchain-container docker1 --execution-container docker2 --source-file file.c file1.c file2.c
+python3 riscv-compiler.py --toolchain-container docker1 --execution-container docker2 --source-file file.c file1.c file2.c -o riscv.out -O3
 ```
 
