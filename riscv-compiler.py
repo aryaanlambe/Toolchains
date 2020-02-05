@@ -46,12 +46,15 @@ def main():
 
     fileNames = []
     headers = [os.getcwd()]
+
     for option in compilerOptions:
         if not option.startswith('-'):
-            compilerOptions.remove(option)
+       #    compilerOptions.remove(option)
             fileNames.append(option)
         if option.startswith("-I"):
             headers.append(option.split("-I")[-1])
+
+    tempCompilerOptions = [x for x in compilerOptions if x not in fileNames]
 
     if args.source_file:
         fileNames = args.source_file
@@ -63,7 +66,7 @@ def main():
     if args.output:
         output = args.output
 
-    compilerPipeline(fileNames, containerName, exeContainerName, compilerOptions, output, headers)
+    compilerPipeline(fileNames, containerName, exeContainerName, tempCompilerOptions, output, headers)
 
 def getExtention(fileNames):
     return fileNames[0].split('.')[-1]
