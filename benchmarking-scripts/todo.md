@@ -34,7 +34,9 @@
 [ ] adpcm (Conflicting option -c)  
 [x] CRC32  
 [ ] FFT (set compiler for .o files)  
-[ ] gsm (Conflicting option -c)  
+[ ] gsm (Conflicting option -c)   
+
+### 6 / 24 source passing!
 
 ### Todo buckets with count  
 
