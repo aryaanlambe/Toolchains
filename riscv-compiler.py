@@ -52,6 +52,7 @@ def main():
             fileNames.append(option)
         if option.startswith("-I"):
             headers.append(option.split("-I")[-1])
+
     if args.source_file:
         fileNames = args.source_file
 
