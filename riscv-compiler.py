@@ -45,11 +45,13 @@ def main():
         sys.exit(1)
 
     fileNames = []
+    headers = [os.getcwd()]
     for option in compilerOptions:
         if not option.startswith('-'):
             compilerOptions.remove(option)
             fileNames.append(option)
-
+        if option.startswith("-I"):
+            headers.append(option.split("-I")[-1])
     if args.source_file:
         fileNames = args.source_file
 
@@ -60,7 +62,7 @@ def main():
     if args.output:
         output = args.output
 
-    compilerPipeline(fileNames, containerName, exeContainerName, compilerOptions, output)
+    compilerPipeline(fileNames, containerName, exeContainerName, compilerOptions, output, headers)
 
 def getExtention(fileNames):
     return fileNames[0].split('.')[-1]
@@ -95,10 +97,20 @@ def sendToQemuAndRun(exeContainerName, fileName):
     # docker exec -it exeContainerName send fileName
     subprocess.run(DOCKER_INVOKE + [exeContainerName, "send", fileName])
 
-def compilerPipeline(fileNames, containerName, exeContainerName, compilerOptions, output):
+def getHeaderFiles(headers):
+    headerFiles = []
+    for headerDir in headers:
+        for file in os.listdir(headerDir):
+            if os.path.isfile(os.path.join(headerDir, file)) and file.endswith(".h"):
+                headerFiles.append(file)
+    return headerFiles
+
+def compilerPipeline(fileNames, containerName, exeContainerName, compilerOptions, output, headers):
     extention = getExtention(fileNames)
     compiler = selectCompiler(extention)
     sendSourceToDocker(containerName, fileNames, fileNames)
+    headerFiles = getHeaderFiles(headers)
+    sendSourceToDocker(containerName, headerFiles, headerFiles)
     executableFile = sourceToExecutable(compiler, fileNames, containerName, compilerOptions)
     tempPathOnHost = output
     tempPathOnExeDocker = "/root/riscv.out"
