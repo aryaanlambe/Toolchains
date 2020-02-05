@@ -13,21 +13,21 @@
 [ ] tiff (Still uses cc)  
 [ ] typeset (Conflicting option -c)  
 
-### [ ] network
+### [x] network
 [x] dijkstra  
-[ ] patricia (Wierd bug around line 50 riscv-compiler.py)  
+[x] patricia   
 
 ### [ ] office
 [ ] ghostscript (Bug not yet accessed)  
 [ ] ispell (Still uses cc)  
 [ ] rsynth (Requires configure before make)  
 [ ] sphinx (Requires configure before make)  
-[ ] stringsearch (Wierd bug around line 50 riscv-compiler.py)  
+[x] stringsearch  
 
 ### [ ] security
 [ ] blowfish (Conflicting option -c)  
 [ ] pgp (Still uses cc)  
-[ ] rijndael (Wierd bug around line 50 riscv-compiler.py)  
+[ ] rijndael (Bug not yet accessed)  
 [ ] sha (Conflicting option -c)  
 
 ### [ ] telecom
@@ -36,7 +36,7 @@
 [ ] FFT (set compiler for .o files)  
 [ ] gsm (Conflicting option -c)   
 
-### 6 / 24 source passing!
+### 8 / 24 source passing!
 
 ### Todo buckets with count  
 
@@ -44,8 +44,7 @@
 | ---- | ----- | 
 | Conflicting option -c | 5 |
 | Requires configure before make | 4 |
-| Wierd loop bug around line 50 | 3 |
 | Still uses cc | 3 |
 | set compiler for .o files | 1 |
 | Requires termcap.h from libncurses5-dev | 1 |
-| Bug not yet accessed | 1 |
+| Bug not yet accessed | 2 |
