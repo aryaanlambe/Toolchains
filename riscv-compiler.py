@@ -18,7 +18,7 @@ def main():
 
     parser = ArgumentParser(description="Compiler and run c/c++ programs on riscv environment")
 
-    parser.add_argument('-c', '--toolchain-container',
+    parser.add_argument('-cc', '--toolchain-container',
             action='store',
             help='Name of container with the toolchain',
             required=True)
