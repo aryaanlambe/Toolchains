@@ -75,6 +75,8 @@ def selectCompiler(extention):
     compiler = ""
     if extention == "c":
             compiler = "riscv-cc"
+    elif extention == "o":
+            compiler = "riscv-cc"
     elif extention == "cpp":
             compiler = "riscv-cxx"
     return compiler
